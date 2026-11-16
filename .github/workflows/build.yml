@@ -2,7 +2,7 @@ name: Build Mahi APK
 on:
   push:
     paths:
-      - 'mahi-project.zip'
+      - '*.zip'
   workflow_dispatch:
 permissions:
   contents: write
@@ -11,8 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Unzip project
-        run: unzip -q mahi-project.zip -d proj
+        with:
+          fetch-depth: 0
+      - name: Unzip the newest project zip
+        run: |
+          f=$(git log -1 --name-only --pretty=format: -- '*.zip' | grep -m1 '\.zip$')
+          echo "Using: $f"
+          mkdir proj
+          unzip -q "$f" -d proj
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
