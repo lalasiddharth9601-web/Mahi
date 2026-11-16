@@ -1,0 +1,31 @@
+name: Build Mahi APK
+on:
+  push:
+    paths:
+      - 'mahi-project.zip'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip project
+        run: unzip -q mahi-project.zip -d proj
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build APK
+        working-directory: proj
+        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Publish APK as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp proj/app/build/outputs/apk/debug/app-debug.apk Mahi.apk
+          gh release create "build-${{ github.run_number }}" Mahi.apk --title "Mahi build ${{ github.run_number }}" --notes "Download Mahi.apk and install it."
